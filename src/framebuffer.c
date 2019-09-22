@@ -83,7 +83,8 @@ struct nxtmWindow* spawnWindow(struct nxtmScreen* NXTMScreen){
 	Window->screenX = 10;
 	Window->screenY = 10;
 	Window->show = 1;
-	drawWindow(Window, NXTMScreen);
+	Window->active = 0;
+	drawWindow(Window, NXTMScreen, 0);
 	return Window;
 }
 
@@ -91,9 +92,12 @@ void destroyWindow(struct nxtmWindow* Window){
 	Window->show = 0;
 }
 
-void drawWindow(struct nxtmWindow* Window, struct nxtmScreen* NXTMScreen){
+void drawWindow(struct nxtmWindow* Window, struct nxtmScreen* NXTMScreen, bool active){
 	// overlay
-	drawBox(NXTMScreen, (Window->screenX)-1, (Window->screenY)-1, (Window->sizeX)+2, (Window->sizeY)+2, 0, 0xFF, 0xFF, 0xFF, 0);
+	if(active)
+		drawBox(NXTMScreen, (Window->screenX)-1, (Window->screenY)-1, (Window->sizeX)+2, (Window->sizeY)+2, 0, 0xFF, 0x00, 0x00, 0);
+	else
+		drawBox(NXTMScreen, (Window->screenX)-1, (Window->screenY)-1, (Window->sizeX)+2, (Window->sizeY)+2, 0, 0xFF, 0xFF, 0xFF, 0);
 	// window itself
 	drawBox(NXTMScreen, Window->screenX, Window->screenY, Window->sizeX, Window->sizeY, 0, Window->R, Window->G, Window->B, 0);
 }

@@ -30,4 +30,5 @@ struct nxtmWindow {
 	unsigned char G;
 	unsigned char B;
 	bool show;
+	bool active;
 };

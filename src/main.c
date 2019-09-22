@@ -48,8 +48,12 @@ void closenxtm(){
 void redrawWindows(){
 	drawBackground(&NXTMScreen, 120, 120, 200);
 	for(int i = 0; i<20; i++){
-		if(NXTMWindows[i]->show == 1)
-			drawWindow(NXTMWindows[i], &NXTMScreen);
+		if(NXTMWindows[i]->show == 1){
+			if(NXTMWindows[i]->active)
+				drawWindow(NXTMWindows[i], &NXTMScreen, 1);
+			else
+				drawWindow(NXTMWindows[i], &NXTMScreen, 0);
+		}
 	}
 }
 
@@ -89,6 +93,9 @@ int main(){
 				if(NXTMWindows[i]->show == 0){
 					//drawBackground(&NXTMScreen, 120, 120, 200);
 					NXTMWindows[i]->show = 1;
+					NXTMWindows[selectedWindow]->active = 0;
+					NXTMWindows[i]->active = 1;
+					selectedWindow = i;
 					printf("Spawned new window\n");
 					while(NXTMKeyboard.keys[K_Enter] == 1)
 						keyboardUpdate(&NXTMKeyboard);
@@ -153,6 +160,29 @@ int main(){
 				redrawWindows();
 			}
 		}
+
+		if(NXTMKeyboard.keys[K_LAlt] && NXTMKeyboard.keys[K_2]){ // go to next window
+			NXTMWindows[selectedWindow]->active = 0;
+			selectedWindow++;
+			if(selectedWindow == 20)
+				selectedWindow = 0;
+			NXTMWindows[selectedWindow]->active = 1;
+			redrawWindows();
+			while(NXTMKeyboard.keys[K_2])
+				keyboardUpdate(&NXTMKeyboard);
+		}
+
+		if(NXTMKeyboard.keys[K_LAlt] && NXTMKeyboard.keys[K_1]){ // go to previous window
+			NXTMWindows[selectedWindow]->active = 0;
+			selectedWindow--;
+			if(selectedWindow == -1)
+				selectedWindow = 19;
+			NXTMWindows[selectedWindow]->active = 1;
+			redrawWindows();
+			while(NXTMKeyboard.keys[K_1])
+				keyboardUpdate(&NXTMKeyboard);
+		}
+
 #ifdef DEBUG
 		printf("IM RUNNING, ESCAPE: %d\n", (int)(NXTMKeyboard.keys[1]));
 #endif

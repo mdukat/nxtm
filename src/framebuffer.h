@@ -13,4 +13,4 @@ struct nxtmWindow* spawnWindow(struct nxtmScreen *);
 
 void destroyWindow(struct nxtmWindow *);
 
-void drawWindow(struct nxtmWindow *, struct nxtmScreen *);
+void drawWindow(struct nxtmWindow *, struct nxtmScreen *, bool);
