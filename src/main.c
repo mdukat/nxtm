@@ -38,6 +38,7 @@ struct nxtmKeyboard NXTMKeyboard;
 enum keyboardKeys NXTMKeyboardKeys;
 struct nxtmWindow* NXTMWindows[20];
 int selectedWindow = 0; // 0-19
+int activeWindows = 0; // 0-19
 
 void closenxtm(){
 	system("clear && chvt 3");
@@ -46,15 +47,19 @@ void closenxtm(){
 }
 
 void redrawWindows(){
-	drawBackground(&NXTMScreen, 120, 120, 200);
 	for(int i = 0; i<20; i++){
 		if(NXTMWindows[i]->show == 1){
 			if(NXTMWindows[i]->active)
-				drawWindow(NXTMWindows[i], &NXTMScreen, 1);
+				drawWindow(NXTMWindows[i], &NXTMScreen, 1, 0);
 			else
-				drawWindow(NXTMWindows[i], &NXTMScreen, 0);
+				drawWindow(NXTMWindows[i], &NXTMScreen, 0, 0);
 		}
 	}
+}
+
+void redrawScreen(){
+	drawBackground(&NXTMScreen, 120, 120, 200);
+	redrawWindows();
 }
 
 int main(){
@@ -79,8 +84,6 @@ int main(){
 	printf("Keyboard fd: %d\n", NXTMKeyboard.fd);
 	
 	drawBackground(&NXTMScreen, 120, 120, 200);
-	//drawBox(&NXTMScreen, 0, 0, (unsigned int)(NXTMScreen.vinfo.xres), (unsigned int)(NXTMScreen.vinfo.yres), 0, 120, 120, 200, 0);
-	//drawBox(&NXTMScreen, 100, 100, 300, 300, 0, 100, 100, 100, 20);
 
 	while(1){
 		// Main loop
@@ -91,15 +94,14 @@ int main(){
 		if(NXTMKeyboard.keys[K_LAlt] && NXTMKeyboard.keys[K_Enter]){ // Create new window
 			for(int i = 0; i<20; i++){
 				if(NXTMWindows[i]->show == 0){
-					//drawBackground(&NXTMScreen, 120, 120, 200);
-					NXTMWindows[i]->show = 1;
-					NXTMWindows[selectedWindow]->active = 0;
-					NXTMWindows[i]->active = 1;
-					selectedWindow = i;
+					NXTMWindows[i]->show = 1; // Show window
+					NXTMWindows[selectedWindow]->active = 0; // Make last active window not-active
+					NXTMWindows[i]->active = 1; // Make this window active
+					selectedWindow = i; // Select this window
+					activeWindows++;
 					printf("Spawned new window\n");
-					while(NXTMKeyboard.keys[K_Enter] == 1)
+					while(NXTMKeyboard.keys[K_Enter] == 1) // Wait for Enter release, so it doesnt glitch
 						keyboardUpdate(&NXTMKeyboard);
-					printf("Released\n");
 					break;
 				}
 			}
@@ -111,78 +113,84 @@ int main(){
 				destroyWindow(NXTMWindows[i]);
 			}
 			drawBackground(&NXTMScreen, 120, 120, 200);
+			activeWindows = 0;
 		}
 		
 		if(NXTMKeyboard.keys[K_LAlt] && NXTMKeyboard.keys[K_L] && NXTMKeyboard.keys[K_LShift]){ // resize to right
 			if(NXTMWindows[selectedWindow]->show){
-				NXTMWindows[selectedWindow]->sizeX += 10;
-				redrawWindows();
+				if((NXTMWindows[selectedWindow]->sizeX + NXTMWindows[selectedWindow]->screenX + 10) <= NXTMScreen.vinfo.xres){
+					NXTMWindows[selectedWindow]->sizeX += 10;
+					redrawScreen();
+				}
 			}
 		}else if(NXTMKeyboard.keys[K_LAlt] && NXTMKeyboard.keys[K_L]){ // move window to right
 			if(NXTMWindows[selectedWindow]->show){
-				NXTMWindows[selectedWindow]->screenX += 10;
-				redrawWindows();
+				if((NXTMWindows[selectedWindow]->sizeX + NXTMWindows[selectedWindow]->screenX + 10) <= NXTMScreen.vinfo.xres){
+					NXTMWindows[selectedWindow]->screenX += 10;
+					redrawScreen();
+				}
 			}
 		}
 
 		if(NXTMKeyboard.keys[K_LAlt] && NXTMKeyboard.keys[K_J] && NXTMKeyboard.keys[K_LShift]){ // resize to down 
 			if(NXTMWindows[selectedWindow]->show){
-				NXTMWindows[selectedWindow]->sizeY += 10;
-				redrawWindows();
+				if((NXTMWindows[selectedWindow]->sizeY + NXTMWindows[selectedWindow]->screenY + 10) <= NXTMScreen.vinfo.yres){
+					NXTMWindows[selectedWindow]->sizeY += 10;
+					redrawScreen();
+				}
 			}
 		}else if(NXTMKeyboard.keys[K_LAlt] && NXTMKeyboard.keys[K_J]){ // move window to down
 			if(NXTMWindows[selectedWindow]->show){
-				NXTMWindows[selectedWindow]->screenY += 10;
-				redrawWindows();
+				if((NXTMWindows[selectedWindow]->sizeY + NXTMWindows[selectedWindow]->screenY + 10) <= NXTMScreen.vinfo.yres){
+					NXTMWindows[selectedWindow]->screenY += 10;
+					redrawScreen();
+				}
 			}
 		}
 		
 		if(NXTMKeyboard.keys[K_LAlt] && NXTMKeyboard.keys[K_H] && NXTMKeyboard.keys[K_LShift]){ // resize to left
 			if(NXTMWindows[selectedWindow]->show){
-				NXTMWindows[selectedWindow]->sizeX -= 10;
-				redrawWindows();
+				if(NXTMWindows[selectedWindow]->sizeX > 10){
+					NXTMWindows[selectedWindow]->sizeX -= 10;
+					redrawScreen();
+				}
 			}
 		}else if(NXTMKeyboard.keys[K_LAlt] && NXTMKeyboard.keys[K_H]){ // move window to left
 			if(NXTMWindows[selectedWindow]->show){
-				NXTMWindows[selectedWindow]->screenX -= 10;
-				redrawWindows();
+				if(NXTMWindows[selectedWindow]->screenX > 10){
+					NXTMWindows[selectedWindow]->screenX -= 10;
+					redrawScreen();
+				}
 			}
 		}
 
 		if(NXTMKeyboard.keys[K_LAlt] && NXTMKeyboard.keys[K_K] && NXTMKeyboard.keys[K_LShift]){ // resize to up
 			if(NXTMWindows[selectedWindow]->show){
-				NXTMWindows[selectedWindow]->sizeY -= 10;
-				redrawWindows();
+				if(NXTMWindows[selectedWindow]->sizeY > 10){
+					NXTMWindows[selectedWindow]->sizeY -= 10;
+					redrawScreen();
+				}
 			}
 		}else if(NXTMKeyboard.keys[K_LAlt] && NXTMKeyboard.keys[K_K]){ // move window to up
 			if(NXTMWindows[selectedWindow]->show){
-				NXTMWindows[selectedWindow]->screenY -= 10;
-				redrawWindows();
+				if(NXTMWindows[selectedWindow]->screenY > 10){
+					NXTMWindows[selectedWindow]->screenY -= 10;
+					redrawScreen();
+				}
 			}
 		}
 
-		if(NXTMKeyboard.keys[K_LAlt] && NXTMKeyboard.keys[K_2]){ // go to next window
+		if(NXTMKeyboard.keys[K_LAlt] && NXTMKeyboard.keys[K_TAB]){ // go to next window
 			NXTMWindows[selectedWindow]->active = 0;
 			selectedWindow++;
-			if(selectedWindow == 20)
+
+			if(selectedWindow >= activeWindows)
 				selectedWindow = 0;
 			NXTMWindows[selectedWindow]->active = 1;
 			redrawWindows();
-			while(NXTMKeyboard.keys[K_2])
+			while(NXTMKeyboard.keys[K_TAB])
 				keyboardUpdate(&NXTMKeyboard);
 		}
-
-		if(NXTMKeyboard.keys[K_LAlt] && NXTMKeyboard.keys[K_1]){ // go to previous window
-			NXTMWindows[selectedWindow]->active = 0;
-			selectedWindow--;
-			if(selectedWindow == -1)
-				selectedWindow = 19;
-			NXTMWindows[selectedWindow]->active = 1;
-			redrawWindows();
-			while(NXTMKeyboard.keys[K_1])
-				keyboardUpdate(&NXTMKeyboard);
-		}
-
 #ifdef DEBUG
 		printf("IM RUNNING, ESCAPE: %d\n", (int)(NXTMKeyboard.keys[1]));
 #endif
